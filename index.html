@@ -12,7 +12,8 @@
   <body>
     <main id="app" class="app">
       <header class="hero" data-state="loading">
-        <div class="hero__location" id="location">Locating&hellip;</div>
+        <div class="hero__place" id="place">Locating&hellip;</div>
+        <div class="hero__coords" id="coords"></div>
         <div class="hero__temp" id="temp" aria-live="polite">&mdash;</div>
         <div class="hero__caption" id="caption">Now</div>
       </header>
@@ -22,6 +23,11 @@
       </section>
 
       <section id="status" class="status" role="status" aria-live="polite"></section>
+
+      <div class="unit-toggle" role="group" aria-label="Temperature unit">
+        <button type="button" class="unit-toggle__btn" data-unit="fahrenheit" aria-pressed="true">°F</button>
+        <button type="button" class="unit-toggle__btn" data-unit="celsius" aria-pressed="false">°C</button>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

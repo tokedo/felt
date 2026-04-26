@@ -68,16 +68,30 @@ body {
 .hero {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding: 4px 4px 0;
 }
 
-.hero__location {
-  font-size: 0.85rem;
-  color: var(--fg-dim);
+.hero__place {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--fg);
+  letter-spacing: 0.01em;
+  min-height: 1.3em;
+  line-height: 1.25;
+}
+
+.hero__coords {
+  font-size: 0.75rem;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  text-transform: uppercase;
-  min-height: 1.1em;
+  min-height: 1em;
+  line-height: 1.2;
+}
+
+.hero__coords:empty {
+  min-height: 0;
 }
 
 .hero__temp {
@@ -87,16 +101,18 @@ body {
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   min-height: 1em;
+  margin-top: 8px;
 }
 
 .hero__caption {
   font-size: 0.95rem;
   color: var(--fg-dim);
   min-height: 1.2em;
+  margin-top: 4px;
 }
 
 .hero[data-state='loading'] .hero__temp,
-.hero[data-state='loading'] .hero__location {
+.hero[data-state='loading'] .hero__place {
   color: var(--fg-faint);
 }
 
@@ -105,18 +121,19 @@ body {
 .chart-wrap {
   background: var(--bg-elev);
   border-radius: var(--radius);
-  padding: 12px 8px 4px;
-  flex: 1 1 auto;
-  display: flex;
-  align-items: stretch;
-  min-height: 320px;
+  padding: 14px 12px 12px;
 }
 
 .chart {
   width: 100%;
-  height: 100%;
-  min-height: 320px;
+  height: 320px;
   position: relative;
+}
+
+@media (min-height: 760px) {
+  .chart {
+    height: 380px;
+  }
 }
 
 /* uPlot overrides */
@@ -237,6 +254,49 @@ body {
 }
 
 .status__retry:active {
+  transform: translateY(1px);
+}
+
+/* ---------- unit toggle ---------- */
+
+.unit-toggle {
+  margin-top: auto;
+  align-self: center;
+  display: inline-flex;
+  background: var(--bg-elev);
+  border: 1px solid var(--grid);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.unit-toggle__btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.unit-toggle__btn[aria-pressed='true'] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.unit-toggle__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.unit-toggle__btn:active {
   transform: translateY(1px);
 }
 

@@ -1,38 +1,61 @@
 import './styles.css';
 
-import { fetchForecast, ForecastError } from './api.js';
+import { fetchForecast, ForecastError, UNIT_SYMBOL, type TempUnit } from './api.js';
 import { renderChart, type ChartHandle } from './chart.js';
-import { formatCoords, getCurrentCoords, LocationError } from './location.js';
+import { formatPlace, reverseGeocode } from './geocode.js';
+import { type Coords, formatCoords, getCurrentCoords, LocationError } from './location.js';
 import { createUI } from './ui.js';
+
+const UNIT_KEY = 'felt:unit';
 
 const ui = createUI();
 let chart: ChartHandle | null = null;
+let currentUnit: TempUnit = readUnit();
+let loadEpoch = 0;
+
+ui.setUnit(currentUnit);
+ui.onUnitChange((unit) => {
+  currentUnit = unit;
+  writeUnit(unit);
+  void load();
+});
 
 async function load(): Promise<void> {
+  const epoch = ++loadEpoch;
   if (chart) {
     chart.destroy();
     chart = null;
   }
   ui.setLoading('Locating you…');
 
-  let coords;
+  let coords: Coords;
   try {
     coords = await getCurrentCoords();
   } catch (err) {
-    handleLocationError(err);
+    if (epoch === loadEpoch) handleLocationError(err);
     return;
   }
+  if (epoch !== loadEpoch) return;
 
-  ui.setLocation(formatCoords(coords));
-  ui.setLoading(formatCoords(coords));
+  const coordsLabel = formatCoords(coords);
+  // Show coords immediately as the primary line; geocode will upgrade it.
+  ui.setLocation(coordsLabel);
+
+  // Kick off geocode in parallel; never block forecast on it.
+  void reverseGeocode(coords).then((g) => {
+    if (epoch !== loadEpoch || !g) return;
+    const place = formatPlace(g);
+    if (place) ui.setLocation(place, coordsLabel);
+  });
 
   let forecast;
   try {
-    forecast = await fetchForecast(coords);
+    forecast = await fetchForecast(coords, currentUnit);
   } catch (err) {
-    handleForecastError(err);
+    if (epoch === loadEpoch) handleForecastError(err);
     return;
   }
+  if (epoch !== loadEpoch) return;
 
   const nowSec = Math.floor(Date.now() / 1000);
   const currentTemp = pickCurrentTemp(forecast.times, forecast.temps, nowSec);
@@ -52,8 +75,7 @@ async function load(): Promise<void> {
     timeZone: forecast.timezone
   }).format(new Date());
 
-  ui.setLocation(formatCoords(coords));
-  ui.setNow(currentTemp, localTime);
+  ui.setNow(currentTemp, UNIT_SYMBOL[forecast.unit], localTime);
 
   const target = document.getElementById('chart');
   if (!target) throw new Error('Chart container missing.');
@@ -115,6 +137,24 @@ function pickCurrentTemp(times: number[], temps: number[], nowSec: number): numb
     if (best == null || dt < best.dt) best = { dt, temp: v };
   }
   return best ? best.temp : null;
+}
+
+function readUnit(): TempUnit {
+  try {
+    const v = localStorage.getItem(UNIT_KEY);
+    if (v === 'celsius' || v === 'fahrenheit') return v;
+  } catch {
+    // private mode etc — fall through
+  }
+  return 'fahrenheit';
+}
+
+function writeUnit(unit: TempUnit): void {
+  try {
+    localStorage.setItem(UNIT_KEY, unit);
+  } catch {
+    // ignore
+  }
 }
 
 void load();

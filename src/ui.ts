@@ -1,35 +1,64 @@
+import type { TempUnit } from './api.js';
+
 export interface UI {
   setLoading(message?: string): void;
-  setLocation(label: string): void;
-  setNow(temp: number, isoLocal: string): void;
+  setLocation(primary: string, secondary?: string): void;
+  setNow(temp: number, unitSymbol: string, isoLocal: string): void;
   showError(message: string, hint?: string, onRetry?: () => void): void;
   clearStatus(): void;
+  setUnit(unit: TempUnit): void;
+  onUnitChange(handler: (unit: TempUnit) => void): void;
 }
 
 export function createUI(): UI {
   const hero = required<HTMLElement>('.hero');
-  const locationEl = required<HTMLElement>('#location');
+  const placeEl = required<HTMLElement>('#place');
+  const coordsEl = required<HTMLElement>('#coords');
   const tempEl = required<HTMLElement>('#temp');
   const captionEl = required<HTMLElement>('#caption');
   const chartEl = required<HTMLElement>('#chart');
   const statusEl = required<HTMLElement>('#status');
+  const toggleEl = required<HTMLElement>('.unit-toggle');
+  const toggleBtns = Array.from(
+    toggleEl.querySelectorAll<HTMLButtonElement>('.unit-toggle__btn')
+  );
+
+  let unitHandler: ((unit: TempUnit) => void) | null = null;
+
+  toggleEl.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement | null)?.closest<HTMLButtonElement>('.unit-toggle__btn');
+    if (!btn) return;
+    const unit = btn.dataset['unit'] as TempUnit | undefined;
+    if (unit !== 'fahrenheit' && unit !== 'celsius') return;
+    if (btn.getAttribute('aria-pressed') === 'true') return;
+    applyUnit(unit);
+    unitHandler?.(unit);
+  });
+
+  function applyUnit(unit: TempUnit): void {
+    for (const b of toggleBtns) {
+      b.setAttribute('aria-pressed', b.dataset['unit'] === unit ? 'true' : 'false');
+    }
+  }
 
   return {
     setLoading(message = 'Locating you…') {
       hero.dataset.state = 'loading';
-      locationEl.textContent = message;
+      placeEl.textContent = message;
+      coordsEl.textContent = '';
       tempEl.textContent = '—';
       captionEl.textContent = 'Now';
       chartEl.classList.add('chart--skeleton');
       statusEl.replaceChildren();
     },
-    setLocation(label) {
+    setLocation(primary, secondary) {
       hero.dataset.state = 'ready';
-      locationEl.textContent = label;
+      placeEl.textContent = primary;
+      coordsEl.textContent = secondary ?? '';
     },
-    setNow(temp, isoLocal) {
+    setNow(temp, unitSymbol, isoLocal) {
       hero.dataset.state = 'ready';
-      tempEl.textContent = `${Math.round(temp)}°F`;
+      tempEl.textContent = `${Math.round(temp)}${unitSymbol}`;
       captionEl.textContent = `Now · ${isoLocal}`;
       chartEl.classList.remove('chart--skeleton');
     },
@@ -66,6 +95,12 @@ export function createUI(): UI {
     },
     clearStatus() {
       statusEl.replaceChildren();
+    },
+    setUnit(unit) {
+      applyUnit(unit);
+    },
+    onUnitChange(handler) {
+      unitHandler = handler;
     }
   };
 }

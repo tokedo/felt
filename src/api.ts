@@ -1,12 +1,21 @@
 import type { Coords } from './location.js';
 
+export type TempUnit = 'fahrenheit' | 'celsius';
+
+export const UNIT_SYMBOL: Record<TempUnit, string> = {
+  fahrenheit: '°F',
+  celsius: '°C'
+};
+
 export interface Forecast {
   /** Unix seconds for each hourly sample. */
   times: number[];
-  /** Temperature in °F, aligned with `times`. */
+  /** Temperature in `unit`, aligned with `times`. */
   temps: number[];
   /** IANA timezone returned by Open-Meteo (e.g. "America/Los_Angeles"). */
   timezone: string;
+  /** Unit the API returned values in. */
+  unit: TempUnit;
 }
 
 export class ForecastError extends Error {
@@ -30,14 +39,18 @@ interface OpenMeteoResponse {
 
 const ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 
-export async function fetchForecast({ lat, lon }: Coords, signal?: AbortSignal): Promise<Forecast> {
+export async function fetchForecast(
+  { lat, lon }: Coords,
+  unit: TempUnit,
+  signal?: AbortSignal
+): Promise<Forecast> {
   const url = new URL(ENDPOINT);
   url.searchParams.set('latitude', lat.toFixed(4));
   url.searchParams.set('longitude', lon.toFixed(4));
   url.searchParams.set('hourly', 'temperature_2m');
   url.searchParams.set('past_days', '3');
   url.searchParams.set('forecast_days', '5');
-  url.searchParams.set('temperature_unit', 'fahrenheit');
+  url.searchParams.set('temperature_unit', unit);
   url.searchParams.set('timezone', 'auto');
 
   let res: Response;
@@ -76,7 +89,7 @@ export async function fetchForecast({ lat, lon }: Coords, signal?: AbortSignal):
   const times = rawTimes.map((iso) => localIsoToUnixSeconds(iso, timezone));
   const temps = rawTemps.slice();
 
-  return { times, temps, timezone };
+  return { times, temps, timezone, unit };
 }
 
 /**

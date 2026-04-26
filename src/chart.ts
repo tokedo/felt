@@ -1,7 +1,7 @@
 import uPlot, { type AlignedData, type Options } from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
-import type { Forecast } from './api.js';
+import { UNIT_SYMBOL, type Forecast } from './api.js';
 
 export interface ChartHandle {
   destroy(): void;
@@ -33,9 +33,10 @@ export function renderChart(
   const gridColor = cs.getPropertyValue('--grid').trim() || 'rgba(255,255,255,0.06)';
   const axisColor = cs.getPropertyValue('--axis').trim() || 'rgba(255,255,255,0.35)';
   const nowColor = cs.getPropertyValue('--now-line').trim() || 'rgba(245,176,74,0.85)';
-  const fgColor = cs.getPropertyValue('--fg').trim() || '#e6ecf5';
+  const bgElev = cs.getPropertyValue('--bg-elev').trim() || '#111a2e';
 
   const tooltip = buildTooltip(target);
+  const unitSymbol = UNIT_SYMBOL[forecast.unit];
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     weekday: 'short',
     hour: 'numeric',
@@ -63,7 +64,7 @@ export function renderChart(
         size: 9,
         width: 2,
         stroke: (_u, sidx) => (sidx === 1 ? pastColor : futureColor),
-        fill: () => cs.getPropertyValue('--bg-elev').trim() || '#111a2e'
+        fill: () => bgElev
       }
     },
     scales: {
@@ -118,21 +119,29 @@ export function renderChart(
           ctx.lineTo(x, u.bbox.top + u.bbox.height);
           ctx.stroke();
 
-          ctx.fillStyle = nowColor;
-          ctx.font = '600 10px -apple-system, system-ui, sans-serif';
+          ctx.font = '700 17px -apple-system, system-ui, sans-serif';
           ctx.textBaseline = 'top';
           const label = 'NOW';
           const w = ctx.measureText(label).width;
-          const padX = 6;
           const labelX = Math.min(
-            Math.max(u.bbox.left, x - w / 2 - padX),
-            u.bbox.left + u.bbox.width - w - padX * 2
+            Math.max(u.bbox.left + 4, x - w / 2),
+            u.bbox.left + u.bbox.width - w - 4
           );
-          ctx.fillText(label, labelX + padX, u.bbox.top + 2);
-          ctx.restore();
+          const labelY = u.bbox.top + 4;
 
-          // re-color y-axis tick labels (uPlot uses axis.stroke)
-          ctx.fillStyle = fgColor;
+          // soft pill behind the label so it stays legible over the data line
+          const padX = 6;
+          const padY = 3;
+          const pillH = 22;
+          ctx.fillStyle = bgElev;
+          ctx.globalAlpha = 0.85;
+          roundRect(ctx, labelX - padX, labelY - padY, w + padX * 2, pillH, 6);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          ctx.fillStyle = nowColor;
+          ctx.fillText(label, labelX, labelY);
+          ctx.restore();
         }
       ],
       setCursor: [
@@ -154,7 +163,7 @@ export function renderChart(
             left,
             top,
             time: fullFmt.format(new Date(t * 1000)),
-            temp: `${Math.round(tempAt)}°F`
+            temp: `${Math.round(tempAt)}${unitSymbol}`
           });
         }
       ]
@@ -184,6 +193,28 @@ interface Tooltip {
   element: HTMLElement;
   show(args: { left: number; top: number; time: string; temp: string }): void;
   hide(): void;
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+): void {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
 }
 
 function buildTooltip(parent: HTMLElement): Tooltip {
