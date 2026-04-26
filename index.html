@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1220" />
+    <meta name="description" content="Weather forecasts anchored in what just happened." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Felt</title>
+  </head>
+  <body>
+    <main id="app" class="app">
+      <header class="hero" data-state="loading">
+        <div class="hero__location" id="location">Locating&hellip;</div>
+        <div class="hero__temp" id="temp" aria-live="polite">&mdash;</div>
+        <div class="hero__caption" id="caption">Now</div>
+      </header>
+
+      <section class="chart-wrap" aria-label="Temperature: past 3 days through next 5 days">
+        <div id="chart" class="chart"></div>
+      </section>
+
+      <section id="status" class="status" role="status" aria-live="polite"></section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,250 @@
+/* Felt — single-file stylesheet. Mobile-first. */
+
+:root {
+  --bg: #0b1220;
+  --bg-elev: #111a2e;
+  --fg: #e6ecf5;
+  --fg-dim: #9aa6bd;
+  --fg-faint: #5a6580;
+  --accent: #f5b04a;
+  --accent-soft: #fde0a8;
+  --past: #6f7d99;
+  --future: #f5b04a;
+  --grid: rgba(255, 255, 255, 0.06);
+  --axis: rgba(255, 255, 255, 0.35);
+  --now-line: rgba(245, 176, 74, 0.85);
+  --error: #ef6b6b;
+
+  --radius: 14px;
+  --gap: 16px;
+
+  color-scheme: dark light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f9fc;
+    --bg-elev: #ffffff;
+    --fg: #0b1220;
+    --fg-dim: #4a5878;
+    --fg-faint: #8390ad;
+    --past: #a6b1c8;
+    --future: #d18a2a;
+    --grid: rgba(0, 0, 0, 0.06);
+    --axis: rgba(0, 0, 0, 0.45);
+    --now-line: rgba(209, 138, 42, 0.85);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: max(env(safe-area-inset-top), 20px) var(--gap)
+    max(env(safe-area-inset-bottom), 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100dvh;
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 4px 0;
+}
+
+.hero__location {
+  font-size: 0.85rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  min-height: 1.1em;
+}
+
+.hero__temp {
+  font-size: clamp(3.5rem, 14vw, 5rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  min-height: 1em;
+}
+
+.hero__caption {
+  font-size: 0.95rem;
+  color: var(--fg-dim);
+  min-height: 1.2em;
+}
+
+.hero[data-state='loading'] .hero__temp,
+.hero[data-state='loading'] .hero__location {
+  color: var(--fg-faint);
+}
+
+/* ---------- chart ---------- */
+
+.chart-wrap {
+  background: var(--bg-elev);
+  border-radius: var(--radius);
+  padding: 12px 8px 4px;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  min-height: 320px;
+}
+
+.chart {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  position: relative;
+}
+
+/* uPlot overrides */
+.uplot,
+.u-wrap {
+  width: 100% !important;
+}
+
+.u-legend {
+  display: none;
+}
+
+.u-axis {
+  color: var(--fg-dim);
+}
+
+/* tooltip — see chart.ts */
+.felt-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translate(-50%, -120%);
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 2;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+.felt-tooltip[data-visible='true'] {
+  opacity: 1;
+}
+
+.felt-tooltip__time {
+  color: var(--fg-dim);
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+}
+
+/* skeleton chart */
+.chart--skeleton::before {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---------- status / errors ---------- */
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 4px;
+  min-height: 1px;
+}
+
+.status:empty {
+  display: none;
+}
+
+.status__message {
+  color: var(--fg);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.status__message--error {
+  color: var(--error);
+}
+
+.status__hint {
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.status__retry {
+  appearance: none;
+  background: var(--accent);
+  color: #1a1208;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.status__retry:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.status__retry:active {
+  transform: translateY(1px);
+}
+
+/* ---------- responsive ---------- */
+
+@media (min-width: 640px) {
+  .app {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
