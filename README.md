@@ -63,4 +63,4 @@ Edit `tools/gen-icons.mjs` to change colors, sizes, or the glyph.
 
 ## License
 
-[MIT](./LICENSE) © Anatoly, 2026.
+[MIT](./LICENSE) © tokedo, 2026.
