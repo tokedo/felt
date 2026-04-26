@@ -260,8 +260,8 @@ body {
 /* ---------- unit toggle ---------- */
 
 .unit-toggle {
-  margin-top: auto;
   align-self: center;
+  margin-top: -8px;
   display: inline-flex;
   background: var(--bg-elev);
   border: 1px solid var(--grid);

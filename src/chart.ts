@@ -180,8 +180,43 @@ export function renderChart(
   });
   ro.observe(target);
 
+  const over = plot.over;
+
+  const setCursorFromTouch = (touch: Touch): void => {
+    const r = over.getBoundingClientRect();
+    plot.setCursor(
+      { left: touch.clientX - r.left, top: touch.clientY - r.top },
+      true
+    );
+  };
+
+  // uPlot only reacts to mouse events, so we drive its cursor manually from
+  // touch and preventDefault throughout the gesture. That blocks the browser
+  // from synthesizing mousemove/mouseleave — without that suppression, the
+  // synthesized mouseleave on touchend would reset the cursor and hide the
+  // tooltip. As a bonus it stops the page from scrolling while dragging on
+  // the chart. passive:false is required for preventDefault on iOS Chrome.
+  const onTouchStart = (e: TouchEvent): void => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    setCursorFromTouch(touch);
+  };
+
+  const onTouchMove = (e: TouchEvent): void => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    e.preventDefault();
+    setCursorFromTouch(touch);
+  };
+
+  over.addEventListener('touchstart', onTouchStart, { passive: false });
+  over.addEventListener('touchmove', onTouchMove, { passive: false });
+
   return {
     destroy() {
+      over.removeEventListener('touchstart', onTouchStart);
+      over.removeEventListener('touchmove', onTouchMove);
       ro.disconnect();
       plot.destroy();
       tooltip.element.remove();
